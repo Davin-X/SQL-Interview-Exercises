@@ -16,7 +16,7 @@ Prerequisites =>
 https://cdn.mysql.com//Downloads/MySQLInstaller/mysql-installer-web-community-8.0.26.0.msi
 install and setup password 
 
- # 2 - installing MySQL databse clint in vscode  
+ # 2 - installing MySQL databse client in vscode  
  
  -https://marketplace.visualstudio.com/items?itemName=cweijan.vscode-mysql-client2
 
