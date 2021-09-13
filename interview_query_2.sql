@@ -19,7 +19,7 @@ answer -
 1)inner join = 15 records
 2)left join = 17 records
 3)right join = 15 records
-4)full outer join = 17 records 
+4)full outer join = 
 
 INNER JOIN: The INNER JOIN keyword selects all rows from both the tables as long as the condition satisfies. 
 
@@ -53,3 +53,21 @@ INSERT INTO table2 values (1),(1),(1),(1),(1);
 
 -- inner join 
 SELECT * FROM table1 join table2 on table1.t1 = table2.t2;
+
+-- LEFT JOIN 
+SELECT * FROM table1 left join table2 on table1.t1 = table2.t2;
+
+-- right join 
+
+SELECT * FROM table1 right join table2 on table1.t1 = table2.t2;
+
+
+-- full join 
+SELECT * FROM table1 full join table2 ;
+
+SELECT * FROM table1
+LEFT JOIN table2 ON table1.t1 = table2.t2
+UNION ALL
+SELECT * FROM table1
+RIGHT JOIN table2 ON table1.t1 = table2.t2
+
