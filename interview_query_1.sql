@@ -1,12 +1,6 @@
-/* Question 1 -  given 2 tables 
- employee ( empname,emp_id,salary,dept_id) and department (dept_id,dept_name)
-write a sql command to find empname and department details of employee having maximum salary in the department
+create database EMP;
 
-*/
-
-create database compny;
-
-use compny;
+use EMP;
 
 
 CREATE TABLE employee (empname varchar(25), emp_id int, salary int , dept_id varchar(3) ) ;
@@ -25,6 +19,7 @@ insert into employee values
 
 create table department ( dept_id varchar(3), dept_name varchar(20)) ;
 
+
 insert into department values 
 ("d1","Finance"),
 ("d2","Marketing"),
@@ -33,3 +28,16 @@ insert into department values
 
 select e.empname, max(e.salary),d.dept_name,d.dept_id from employee e join 
  department d on e.dept_id=d.dept_id group by d.dept_name;
+
+
+SELECT empname , dense_rank() over (ORDER BY salary desc) as rnk FROM employee;
+
+select empname from ( SELECT empname , dense_rank() over (ORDER BY salary desc) as rnk FROM employee) tmp  where tmp.rnk = 2  ;
+
+
+select tmp.empname,tmp.salary,tmp.dept_id , d.dept_name from
+( SELECT empname, salary,dept_id, 
+  dense_rank() over (PARTITION BY dept_id ORDER BY salary desc) as rnk
+ FROM employee ) tmp 
+
+join department d on d.dept_id = tmp.dept_id where tmp.rnk = 2  
