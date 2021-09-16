@@ -25,16 +25,19 @@ insert into department values
 ("d2","Marketing"),
 ("d3","HR");
 
+-- 1 depatment wise max salary
 
 select e.empname, max(e.salary),d.dept_name,d.dept_id from employee e join 
  department d on e.dept_id=d.dept_id group by d.dept_name;
 
-
+-- ranking salary
 SELECT empname , dense_rank() over (ORDER BY salary desc) as rnk FROM employee;
 
+-- 2nd highest salary based on department 
 select empname from ( SELECT empname , dense_rank() over (ORDER BY salary desc) as rnk FROM employee) tmp  where tmp.rnk = 2  ;
 
 
+-- 2nd highest salary based on department  with department info (name )
 select tmp.empname,tmp.salary,tmp.dept_id , d.dept_name from
 ( SELECT empname, salary,dept_id, 
   dense_rank() over (PARTITION BY dept_id ORDER BY salary desc) as rnk
