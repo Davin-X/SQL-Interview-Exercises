@@ -6,7 +6,7 @@ LAST_VALUE
 MIN/MAX/COUNT/AVG OVER Clause
 */
 
-//enabling loading from file 
+--enabling loading from file 
  SET GLOBAL local_infile=1;
 
 create table emp_dept_tbl (ID int ,FIRST_NAME varchar(20),LAST_NAME varchar(20),DESIGNATION varchar(20),DEPARTMENT varchar(20),SALARY int) ;
