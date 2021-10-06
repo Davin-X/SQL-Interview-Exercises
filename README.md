@@ -22,5 +22,7 @@ install and setup password
 
  follow given steps to istall and connect to mysql 
 
-# 3 - running and Practicing MySQL in Jupyter Notebook
+# 3 - create a new mysql connection ( JDBC -connection ) 
+
+# 4  - create a .sql file and running and Practicing MySQL in VScode
  
