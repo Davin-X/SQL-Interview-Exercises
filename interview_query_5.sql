@@ -22,10 +22,7 @@ Output
  */
 
 
-select sum(case when id >=0 then id else 0 end) as positive,
-sum(case when id  <0 then id else 0 end) as negative
-from tmp;
-
+Select id as A ,lead(id) over (ORDER BY id) as B FROM tmp;
 
 /* 
 2Q) calculate positive numbers and negative numbers.
@@ -43,8 +40,9 @@ Output
 --------------
 6,-6
 */
-
-Select id as A ,lead(id) over (ORDER BY id) as B FROM tmp;
+select sum(case when id >=0 then id else 0 end) as positive,
+sum(case when id  <0 then id else 0 end) as negative
+from tmp;
 
 /*
 
