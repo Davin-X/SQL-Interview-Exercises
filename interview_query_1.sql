@@ -26,9 +26,9 @@ insert into department values
 ("d3","HR");
 
 -- 1 depatment wise max salary
-
-select e.empname, max(e.salary),d.dept_name,d.dept_id from employee e join 
- department d on e.dept_id=d.dept_id group by d.dept_name;
+select * from (select empname,dept_id, salary, 
+               rank() over (partition by dept_id order by salary desc) as salrank from employee) t
+               where t.salrank=1;
 
 -- ranking salary
 SELECT empname , dense_rank() over (ORDER BY salary desc) as rnk FROM employee;
