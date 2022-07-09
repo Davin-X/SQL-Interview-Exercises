@@ -1,5 +1,5 @@
 --Get department wise male, female and total employees in each department
---- tbEmployeeMaster (EmployeeId     , EmployeeName  ,gender   ,    Departme)
+--- tbEmployeeMaster (EmployeeId     , EmployeeName  ,gender   ,    Department)
 -- output = department , female  , male , total_employees 
 
 CREATE TABLE tbEmployeeMaster
