@@ -54,3 +54,17 @@ GROUP BY
     t1.Train_id, t1.Station, t1.Time
 ORDER BY 
     t1.Train_id, t1.Time;
+
+SELECT 
+  train_schedule.Train_id, 
+  train_schedule.Station, 
+  train_schedule.Time, 
+  TIMEDIFF(train_schedule.Time, COALESCE(LAG(train_schedule.Time) OVER partitioned_schedule, train_schedule.Time)) AS elapsed_travel_time,
+  TIMEDIFF(COALESCE(LEAD(train_schedule.Time) OVER partitioned_schedule, train_schedule.Time), train_schedule.Time) AS time_to_next_station
+FROM 
+  train_schedule
+WINDOW 
+  partitioned_schedule AS (PARTITION BY train_schedule.Train_id ORDER BY train_schedule.Time)
+ORDER BY 
+  train_schedule.Train_id, 
+  train_schedule.Time;
