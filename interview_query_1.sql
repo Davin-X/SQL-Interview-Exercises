@@ -1,3 +1,4 @@
+-- Active: 1671859768936@@127.0.0.1@3306@practice
 create database EMP;
 
 use EMP;

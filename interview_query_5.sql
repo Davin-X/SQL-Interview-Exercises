@@ -17,6 +17,7 @@ Output
  */
 
 */
+;
 
 CREATE TABLE table_1 (id int );
 INSERT INTO table_1 values (1),(2),(3),(4),(5);

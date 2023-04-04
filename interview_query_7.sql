@@ -1,4 +1,4 @@
--- Active: 1643557903486@@127.0.0.1@3306@practice
+-- Active: 1671859768936@@127.0.0.1@3306@practice
 
 /*
 Problem Statement: Below is the flight schedule mentioning the source and destination. We have to show the unique combination of source and destination as an output. For eg: Delhi to Mumbai and Mumbai to Delhi being one unique combination

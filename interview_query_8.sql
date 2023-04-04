@@ -1,4 +1,4 @@
--- Active: 1643557903486@@127.0.0.1@3306@practice
+-- Active: 1671859768936@@127.0.0.1@3306@practice
 
 -- select all the records from table1 those arre not in table2 -
 
