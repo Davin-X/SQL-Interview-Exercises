@@ -9,7 +9,12 @@ MIN/MAX/COUNT/AVG OVER Clause
 --enabling loading from file 
  SET GLOBAL local_infile=1;
 
-create table emp_dept_tbl (ID int ,FIRST_NAME varchar(20),LAST_NAME varchar(20),DESIGNATION varchar(20),DEPARTMENT varchar(20),SALARY int) ;
+create table emp_dept_tbl (ID int ,
+FIRST_NAME varchar(20),
+LAST_NAME varchar(20),
+DESIGNATION varchar(20),
+DEPARTMENT varchar(20),
+SALARY int) ;
 
 LOAD DATA LOCAL INFILE "C:\\Users\\dev30\\Downloads\\data\\dept_data.csv"
  INTO TABLE emp_dept_tbl FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n' IGNORE 1 LINES;
