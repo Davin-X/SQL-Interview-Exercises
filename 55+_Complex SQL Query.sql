@@ -2114,5 +2114,269 @@ WITH cte as (
  AND COUNT(productid) = COUNT(DISTINCT productid);
 
  ---------------------------------------------------------------------------------------------------
- --- 
- ---------------------------------------------------------------------------------------------------
+ --- Marketing Campaign Success SQL Advanced Problem | Step by Step Solution using CTEs
+/* Marketing Campaign Success:
+You have a table of in-app purchases by user. Users that make their first in-app purchase are placed in
+a marketing campaign where they see call-to-actions for more in-app purchases.
+Find the number of users that made additional in-app purchases due to the success of the marketing campaign.
+The marketing campaign doesn't start unt•l one day after the initial in-app purchase so users that only
+made one or multiple purchases on the first day do not count, nor do we count users that over time purchase
+only the products they purchased on the first day.*/
+--------------------------------------------------------------------------------------------------- 
+
+ CREATE TABLE marketing_campaign (
+    user_id INT NULL,
+    created_at DATE NULL,
+    product_id INT NULL,
+    quantity INT NULL,
+    price INT NULL
+);
+
+insert into marketing_campaign values (10,'2019-01-01',101,3,55),
+(10,'2019-01-02',119,5,29),
+(10,'2019-03-31',111,2,149),
+(11,'2019-01-02',105,3,234),
+(11,'2019-03-31',120,3,99),
+(12,'2019-01-02',112,2,200),
+(12,'2019-03-31',110,2,299),
+(13,'2019-01-05',113,1,67),
+(13,'2019-03-31',118,3,35),
+(14,'2019-01-06',109,5,199),
+(14,'2019-01-06',107,2,27),
+(14,'2019-03-31',112,3,200),
+(15,'2019-01-08',105,4,234),
+(15,'2019-01-09',110,4,299),
+(15,'2019-03-31',116,2,499),
+(16,'2019-01-10',113,2,67),
+(16,'2019-03-31',107,4,27),
+(17,'2019-01-11',116,2,499),
+(17,'2019-03-31',104,1,154),
+(18,'2019-01-12',114,2,248),
+(18,'2019-01-12',113,4,67),
+(19,'2019-01-12',114,3,248),
+(20,'2019-01-15',117,2,999),
+(21,'2019-01-16',105,3,234),
+(21,'2019-01-17',114,4,248),
+(22,'2019-01-18',113,3,67),
+(22,'2019-01-19',118,4,35),
+(23,'2019-01-20',119,3,29),
+(24,'2019-01-21',114,2,248),
+(25,'2019-01-22',114,2,248),
+(25,'2019-01-22',115,2,72),
+(25,'2019-01-24',114,5,248),
+(25,'2019-01-27',115,1,72),
+(26,'2019-01-25',115,1,72),
+(27,'2019-01-26',104,3,154),
+(28,'2019-01-27',101,4,55),
+(29,'2019-01-27',111,3,149),
+(30,'2019-01-29',111,1,149),
+(31,'2019-01-30',104,3,154),
+(32,'2019-01-31',117,1,999),
+(33,'2019-01-31',117,2,999),
+(34,'2019-01-31',110,3,299),
+(35,'2019-02-03',117,2,999),
+(36,'2019-02-04',102,4,82),
+(37,'2019-02-05',102,2,82),
+(38,'2019-02-06',113,2,67),
+(39,'2019-02-07',120,5,99),
+(40,'2019-02-08',115,2,72),
+(41,'2019-02-08',114,1,248),
+(42,'2019-02-10',105,5,234),
+(43,'2019-02-11',102,1,82),
+(43,'2019-03-05',104,3,154),
+(44,'2019-02-12',105,3,234),
+(44,'2019-03-05',102,4,82),
+(45,'2019-02-13',119,5,29),
+(45,'2019-03-05',105,3,234),
+(46,'2019-02-14',102,4,82),
+(46,'2019-02-14',102,5,29),
+(46,'2019-03-09',102,2,35),
+(46,'2019-03-10',103,1,199),
+(46,'2019-03-11',103,1,199),
+(47,'2019-02-14',110,2,299),
+(47,'2019-03-11',105,5,234),
+(48,'2019-02-14',115,4,72),
+(48,'2019-03-12',105,3,234),
+(49,'2019-02-18',106,2,123),
+(49,'2019-02-18',114,1,248),
+(49,'2019-02-18',112,4,200),
+(49,'2019-02-18',116,1,499),
+(50,'2019-02-20',118,4,35),
+(50,'2019-02-21',118,4,29),
+(50,'2019-03-13',118,5,299),
+(50,'2019-03-14',118,2,199),
+(51,'2019-02-21',120,2,99),
+(51,'2019-03-13',108,4,120),
+(52,'2019-02-23',117,2,999),
+(52,'2019-03-18',112,5,200),
+(53,'2019-02-24',120,4,99),
+(53,'2019-03-19',105,5,234),
+(54,'2019-02-25',119,4,29),
+(54,'2019-03-20',110,1,299),
+(55,'2019-02-26',117,2,999),
+(55,'2019-03-20',117,5,999),
+(56,'2019-02-27',115,2,72),
+(56,'2019-03-20',116,2,499),
+(57,'2019-02-28',105,4,234),
+(57,'2019-02-28',106,1,123),
+(57,'2019-03-20',108,1,120),
+(57,'2019-03-20',103,1,79),
+(58,'2019-02-28',104,1,154),
+(58,'2019-03-01',101,3,55),
+(58,'2019-03-02',119,2,29),
+(58,'2019-03-25',102,2,82),
+(59,'2019-03-04',117,4,999),
+(60,'2019-03-05',114,3,248),
+(61,'2019-03-26',120,2,99),
+(62,'2019-03-27',106,1,123),
+(63,'2019-03-27',120,5,99),
+(64,'2019-03-27',105,3,234),
+(65,'2019-03-27',103,4,79),
+(66,'2019-03-31',107,2,27),
+(67,'2019-03-31',102,5,82) ;
+
+WITH rnk_data as (
+    SELECT *,
+        RANK() OVER (PARTITION BY user_id ORDER BY created_at asc) rn 
+    FROM marketing_campaign
+),
+  first_app_purchase as (
+    SELECT * FROM rnk_data where rn = 1 
+  ),
+   except_1st_app_purchases as(
+    SELECT * FROM rnk_data WHERE rn > 1 
+   )
+   SELECT A.user_id 
+   FROM except_1st_app_purchases  A 
+    LEFT JOIN first_app_purchase B 
+     ON A.user_id = B.user_id
+     AND A.product_id = B.product_id 
+ where B.product_id is null ;
+ 
+---------------------------------------------------------------------------------------------------
+-- Complex SQL Problem Asked in a Fintech Startup | SQL For Data Analytics
+/* Write SQL to find all couples of trade for same stock that happened in the range of 10 seconds
+and having price difference by more than 10 %.
+Output result should also list the percentage of price difference between the 2 trade */
+---------------------------------------------------------------------------------------------------
+Create Table Trade_tbl(
+    TRADE_ID varchar(20),
+    Trade_Timestamp time,
+    Trade_Stock varchar(20),
+    Quantity int,
+    Price Float
+)
+
+Insert into Trade_tbl Values
+('TRADE1','10:01:05','ITJunction4All',100,20)
+,('TRADE2','10:01:06','ITJunction4All',20,15)
+,('TRADE3','10:01:08','ITJunction4All',150,30)
+,('TRADE4','10:01:09','ITJunction4All',300,32)
+,('TRADE5','10:10:00','ITJunction4All',-100,19)
+,('TRADE6','10:10:01','ITJunction4All',-300,19)
+;
+
+Insert into Trade_tbl Values
+('TRADE1','10:01:05','infosys',100,20)
+,('TRADE2','10:01:06','infosys',20,15)
+,('TRADE5','10:10:00','infosys',-100,19)
+,('TRADE6','10:10:01','infosys',-300,19)
+;
+
+SELECT
+    t1.`TRADE_ID`,
+    t2.`TRADE_ID`,
+    t1.`Trade_Stock`,
+    t1.`Trade_Timestamp`,
+    t2.`Trade_Timestamp`,
+    t1.`Price`,
+    t2.`Price`,
+    ABS(t1.`Price` - t2.`Price`) / t1.`Price` * 100
+FROM trade_tbl t1
+    join trade_tbl t2 ON t1.`Trade_Stock` = t2.`Trade_Stock`
+WHERE
+    t1.`TRADE_ID` != t2.`TRADE_ID`
+    AND t1.`Trade_Timestamp` < t2.`Trade_Timestamp`
+    AND TIMESTAMPDIFF(
+        SECOND,
+        t1.`Trade_Timestamp`,
+        t2.`Trade_Timestamp`
+    ) < 10
+    AND ABS(t1.`Price` - t2.`Price`) / t1.`Price` * 100 > 10
+ORDER BY t1.`TRADE_ID`;
+
+
+---------------------------------------------------------------------------------------------------
+-- Tricky SQL Challenge | SQL For Data Analytics
+-- 
+/* Problem statement : we have a table which stores data of multiple sections. 
+every section has 3 numberswe have to find top 4 numbers from any 2 sections(2 numbers each) whose addition should be maximum
+so in this case we will choose section b where we have 19(10+9) then we need to choose either C or D
+because both has sum of 18 but in D we have 10 which is big from 9 so we will give priority to D.
+*/
+---------------------------------------------------------------------------------------------------
+create table
+    section_data (
+        section varchar(5),
+        number integer
+    )
+    ;
+insert into section_data
+values ('A', 5), ('A', 7), ('A', 10), 
+('B', 7), ('B', 9), ('B', 10), ('C', 9), 
+('C', 7), ('C', 9), ('D', 10), ('D', 3), 
+('D', 8);
+
+;
+WITH cte as (
+    SELECT *,
+    ROW_NUMBER() OVER ( PARTITION BY section order by number desc ) as rn 
+    FROM section_data
+) , 
+   cte2 as(
+    SELECT *,
+        SUM(number) OVER(PARTITION BY section) AS total,
+        max(number) OVER(PARTITION BY section) as sec_max
+     FROM cte where rn <=2     
+   )
+   SELECT * FROM (
+    SELECT * , 
+        DENSE_RANK() OVER(ORDER BY total desc , sec_max desc) as rnk
+    FROM cte2
+   ) a WHERE rnk <= 2 
+   ;;
+    
+Select section,
+number from ( 
+    select tab1.section,
+        tab1.number,
+        sum(number) over(partition by tab1.section) total , 
+        max(number) over ( partition by section) Maxx 
+    from ( 
+        select section
+        ,number,
+        row_number() over (partition by section order by number desc) no
+From section_data) tab1
+where tab1.no<3 
+order by total desc,Maxx desc limit 4) tab2
+;
+
+with summary as (
+select *,
+dense_rank() over (order by number desc) as num_rnk, -- finding the maximum number from all the data
+rank() over (partition by section order by number desc) as in_rnk from section_data  -- utilized this to filter out the third number for each section
+),
+section_sum as (
+select section,sum(number) as sm,
+num_rnk -- finding the sum for each section
+from summary 
+where in_rnk < 3 -- removing third record for each section
+group by section
+),
+top_2_sum as (
+select section,sm from section_sum
+order by sm desc ,num_rnk limit 2 -- ordered by sum of section and breaks tie based on rank of the numbers in each section since D has higher ranked number it is shown in the final output
+)
+select * from top_2_sum;;
+
+
