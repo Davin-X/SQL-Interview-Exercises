@@ -2379,4 +2379,553 @@ order by sm desc ,num_rnk limit 2 -- ordered by sum of section and breaks tie ba
 )
 select * from top_2_sum;;
 
+---------------------------------------------------------------------------------------------------
+-- Data Analyst Case Study by A Major Travel Company | SQL for Data Analytics
+---------------------------------------------------------------------------------------------------
+CREATE TABLE booking_table(
+   Booking_id       VARCHAR(3) NOT NULL 
+  ,Booking_date     date NOT NULL
+  ,User_id          VARCHAR(2) NOT NULL
+  ,Line_of_business VARCHAR(6) NOT NULL
+);
 
+INSERT INTO booking_table(Booking_id,Booking_date,User_id,Line_of_business) 
+VALUES ('b1','2022-03-23','u1','Flight')
+,('b2','2022-03-27','u2','Flight')
+,('b3','2022-03-28','u1','Hotel')
+,('b4','2022-03-31','u4','Flight')
+,('b5','2022-04-02','u1','Hotel')
+,('b6','2022-04-02','u2','Flight')
+,('b7','2022-04-06','u5','Flight')
+,('b8','2022-04-06','u6','Hotel')
+,('b9','2022-04-06','u2','Flight')
+,('b10','2022-04-10','u1','Flight')
+,('b11','2022-04-12','u4','Flight')
+,('b12','2022-04-16','u1','Flight')
+,('b13','2022-04-19','u2','Flight')
+,('b14','2022-04-20','u5','Hotel')
+,('b15','2022-04-22','u6','Flight')
+,('b16','2022-04-26','u4','Hotel')
+,('b17','2022-04-28','u2','Hotel')
+,('b18','2022-04-30','u1','Hotel')
+,('b19','2022-05-04','u4','Hotel')
+,('b20','2022-05-06','u1','Flight')
+;
+
+
+CREATE TABLE user_table(
+   User_id VARCHAR(3) NOT NULL
+  ,Segment VARCHAR(2) NOT NULL
+);
+
+INSERT INTO user_table(User_id,Segment) 
+VALUES ('u1','s1')
+,('u2','s1')
+,('u3','s1')
+,('u4','s2')
+,('u5','s2')
+,('u6','s3')
+,('u7','s3')
+,('u8','s3')
+,('u9','s3')
+,('u10','s3')
+;;
+
+SELECT * FROM booking_table ;
+
+--- Question 1 - summery at segment level 
+--  Segment   Total_user_count     User_who_booked_flight_in_apr2022
+
+SELECT u.segment , 
+count(DISTINCT u.`User_id`) as number_f_users,
+count(DISTINCT CASE WHEN b.`Line_of_business`='Flight' AND b.`Booking_date` BETWEEN '2022-04-01'  and '2022-04-30' THEN  b.`User_id`   END )as user_who_booked_flight
+FROM user_table u 
+LEFT JOIN booking_table b 
+ON u.`User_id`= b.`User_id` 
+GROUP BY u.`Segment`
+;
+
+--- Question 2 - 
+-- Write a query to identify all the users who's first booking was a flight booking
+
+WITH cte as (
+SELECT * ,
+RANK() OVER (PARTITION BY `User_id` ORDER BY `Booking_date` asc ) as rn
+FROM booking_table
+)
+ SELECT * FROM cte where rn =1 and `Line_of_business` = "Hotel";
+
+ --- OR
+ with cte as (
+    SELECT * ,
+    FIRST_VALUE(`Line_of_business`) OVER (PARTITION BY `User_id` ORDER BY `Booking_date` asc ) as First_booking
+    FROM booking_table
+ ) SELECT DISTINCT `User_id` FROM cte WHERE First_booking='Hotel'
+
+ --- Question 3 
+ --- WRITE a query to calculate the days BETWEEN first booking and LAST Booking 
+SELECT
+    `User_id`,
+    min(`Booking_date`),
+    max(`Booking_date`),
+    ABS(DATEDIFF(min(`Booking_date`), max(`Booking_date`)) ) no_of_days
+FROM booking_table
+GROUP BY `User_id`;
+
+--- Question 4 - 
+--- Write a query to count the NUMBER of flight and hotel booking 
+-- in each of the user segment for the year 2022 
+--- user_id   segment   number_of_flight_booking    number_of_hotel_booking
+
+SELECT
+    `Segment`,
+    SUM(CASE WHEN YEAR(Booking_date) = 2022 AND Line_of_business = 'Flight' THEN 1 ELSE 0 END) AS number_of_flight_booking,
+    SUM(CASE WHEN YEAR(Booking_date) = 2022 AND Line_of_business = 'Hotel' THEN 1 ELSE 0 END) AS number_of_hotel_booking
+FROM
+    booking_table b 
+JOIN user_table u 
+ON u.`User_id` = b.`User_id`
+WHERE
+    YEAR(Booking_date) = 2022
+GROUP BY
+    `Segment`;
+
+------------------------------------------------------------------------------------------
+--- Amazon Data Engineer SQL Interview Problem | Leetcode Hard SQL 2494 | Recursive CTE
+--- Merge overlapping events in the same Hall 
+------------------------------------------------------------------------------------------
+
+create table hall_events
+(
+    hall_id integer,
+    start_date date,
+    end_date date
+);
+delete from hall_events;
+
+insert into hall_events values 
+(1,'2023-01-13','2023-01-14')
+,(1,'2023-01-14','2023-01-17')
+,(1,'2023-01-15','2023-01-17')
+,(1,'2023-01-18','2023-01-25')
+,(2,'2022-12-09','2022-12-23')
+,(2,'2022-12-13','2022-12-17')
+,(3,'2022-12-01','2023-01-30');
+
+with RECURSIVE cte as (
+        SELECT
+            *,
+            ROW_NUMBER() OVER( ORDER BY hall_id,start_date ) as event_id
+        FROM
+            hall_events
+    ),
+     r_cte as (
+        SELECT
+            hall_id,
+            start_date,
+            end_date,
+            event_id,
+            '1' as flag
+        FROM cte
+        where event_id = 1
+        UNION ALL
+        SELECT
+            cte.hall_id,
+            cte.start_date,
+            cte.end_date,
+            cte.event_id,
+            CASE
+                WHEN cte.hall_id = r_cte.hall_id
+                AND(
+                    cte.start_date BETWEEN r_cte.start_date
+                    and r_cte.end_date
+                    OR r_cte.start_date BETWEEN cte.start_date
+                    AND cte.end_date
+                ) THEN 0
+                ELSE 1
+            END + flag as flag
+        FROM r_cte
+            INNER JOIN cte ON r_cte.event_id + 1 = cte.event_id
+    )
+    select hall_id,
+        flag,
+        min(start_date) as start_date,
+        max(end_date) as end_date
+    from r_cte
+    group by hall_id ,flag
+    order by hall_id, flag 
+    ;;
+
+with cte as(
+        select
+            hall_id,
+            start_date,
+            end_date,
+            lag(end_date) over(
+                partition by hall_id
+                order by
+                    start_date
+            ) as prev_end_date
+        from hall_events
+    )
+select
+    hall_id,
+    min(start_date) as start_date,
+    max(end_date) as end_date
+from cte
+where
+    prev_end_date is null
+    or start_date < prev_end_date
+group by hall_id
+union
+select
+    hall_id,
+    start_date,
+    end_date
+from cte
+where
+    start_date > prev_end_date
+order by hall_id, start_date;
+
+-----------------------------------------------------------------------------------------------------------
+-- PayPal SQL Interview Problem (Level Hard) | Advanced SQL Problem
+/* The question goes as follows: We need to obtain a list of departments with an average salary lower than the overall average salary of the company.
+However, when calculating the company's average salary, you must exclude the salaries of the department you are comparing it with. For instance,
+when comparing the average salary of the HR department with the company's average, the HR department's salaries shouldn't be taken into
+consideration for the calculation of company average salary. Likewise, if you want to compare the average salary of the Finance department with the
+company's average, the comkpny's average salary should not include the salaries of the Finance department, and so on. Essentially, the company's
+average salary will be dynamic for each department.*/
+-----------------------------------------------------------------------------------------------------------
+
+create table emp_paypal(
+    emp_id int,
+    emp_name varchar(20),
+    department_id int,
+    salary int,
+    manager_id int,
+    emp_age int
+    );
+
+INSERT INTO emp_paypal (emp_id, emp_name, department_id, salary, manager_id, emp_age)
+VALUES
+    (1, 'Ankit', 100, 10000, 4, 39),
+    (2, 'Mohit', 100, 15000, 5, 48),
+    (3, 'Vikas', 100, 10000, 4, 37),
+    (4, 'Rohit', 100, 5000, 2, 16),
+    (5, 'Mudit', 200, 12000, 6, 55),
+    (6, 'Agam', 200, 12000, 2, 14),
+    (7, 'Sanjay', 200, 9000, 2, 13),
+    (8, 'Ashish', 200, 5000, 2, 12),
+    (9, 'Mukesh', 300, 6000, 6, 51),
+    (10, 'Rakesh', 300, 7000, 6, 50);
+
+WITH cte as (    
+    SELECT 
+        department_id,
+        AVG(salary) as dept_avg_sal,
+        count(*) as num_of_emps,
+        sum(salary) as total_dept_sal
+    FROM emp_paypal
+    GROUP BY department_id  
+)
+, cte2 as (
+    SELECT 
+        e1.department_id,
+        e1.dept_avg_sal,
+        sum( e2.num_of_emps) as no_of_emps,
+        sum( e2.total_dept_sal) as total_sal,
+        (sum( e2.total_dept_sal)/sum( e2.num_of_emps )) as cmp_avg_sal
+    FROM cte e1 
+    JOIN cte e2 
+    ON e1.department_id != e2.department_id 
+    GROUP BY e1.department_id ,e1.dept_avg_sal
+    ORDER BY e1.department_id
+) SELECT * FROM cte2 WHERE dept_avg_sal < cmp_avg_sal 
+;;
+
+-----------------------------------------------------------------------------------------------------------
+--- PayPal Data Engineer SQL Interview Question (and a secret time saving trick)
+--Write an sql code to find output table as below
+-- employeeid ,employee_default_phone_number, totalentry,totallogin,totallogout,latestlogin,latestlogout
+-----------------------------------------------------------------------------------------------------------
+
+-- Create the employee_checkin_details table
+CREATE TABLE employee_checkin_details (
+    employeeid INT,
+    entry_details VARCHAR(255),
+    timestamp_details TIMESTAMP
+);
+
+-- Insert data into the employee_checkin_details table
+INSERT INTO employee_checkin_details (employeeid, entry_details, timestamp_details)
+VALUES
+    (1000, 'login', '2023-06-16 01:00:15.34'),
+    (1000, 'login', '2023-06-16 02:00:15.34'),
+    (1000, 'login', '2023-06-16 03:00:15.34'),
+    (1000, 'logout', '2023-06-16 12:00:15.34'),
+    (1001, 'login', '2023-06-16 01:00:15.34'),
+    (1001, 'login', '2023-06-16 02:00:15.34'),
+    (1001, 'login', '2023-06-16 03:00:15.34'),
+    (1001, 'logout', '2023-06-16 12:00:15.34');
+
+-- Create the employee_details table
+CREATE TABLE employee_details (
+    employeeid INT,
+    phone_number VARCHAR(255),
+    isdefault BOOLEAN
+);
+
+-- Insert data into the employee_details table
+INSERT INTO employee_details (employeeid, phone_number, isdefault)
+VALUES
+    (1001, '9999', false),
+    (1001, '1111', false),
+    (1001, '2222', true),
+    (1003, '3333', false);
+
+---Write an sql code to find output table as below
+--- employeeid ,employee_default_phone_number, totalentry,totallogin,totallogout,latestlogin,latestlogout
+
+SELECT * 
+FROM employee_checkin_details 
+JOIN employee_details
+ON employee_checkin_details.employeeid= employee_details.employeeid;;
+
+WITH logins AS (
+    SELECT 
+        employeeid,
+        COUNT(*) AS total_logins,
+        MAX(timestamp_details) AS latest_login
+    FROM employee_checkin_details
+    WHERE entry_details = 'login'
+    GROUP BY employeeid
+),
+logouts AS (
+    SELECT 
+        employeeid,
+        COUNT(*) AS total_logouts,
+        MAX(timestamp_details) AS latest_logout
+    FROM employee_checkin_details
+    WHERE entry_details = 'logout'
+    GROUP BY employeeid
+)
+SELECT a.employeeid,
+    a.total_logins,
+    a.latest_login,
+    b.total_logouts,
+    b.latest_logout,
+    a.total_logins + b.total_logouts AS total_entries,
+    c.phone_number,
+    c.isdefault
+FROM logins a 
+JOIN logouts b ON a.employeeid = b.employeeid
+LEFT JOIN employee_details c ON a.employeeid = c.employeeid
+AND c.isdefault = true
+; ;
+
+--- or 
+
+SELECT 
+    a.employeeid,
+    c.phone_number,
+    COUNT(*) as total_enteries,
+    COUNT(CASE WHEN entry_details='login' THEN  timestamp_details ELSE  NULL END ) as total_logins,
+    COUNT(CASE WHEN entry_details='logout' THEN  timestamp_details ELSE  NULL END ) as total_logouts,
+    MAX(CASE WHEN entry_details='login' THEN  timestamp_details ELSE  NULL END ) as latest_login,
+    MAX(CASE WHEN entry_details='logout' THEN  timestamp_details ELSE  NULL END ) as latest_logout
+FROM employee_checkin_details a
+LEFT JOIN employee_details c ON a.employeeid = c.employeeid
+AND c.isdefault = true
+GROUP BY employeeid,phone_number
+;;
+
+
+-- Add the phone_no_added_date column to the employee_details table
+ALTER TABLE employee_details
+ADD COLUMN phone_no_added_date DATE;
+
+-- Update the phone_no_added_date for each employee based on conditions
+-- In this example, we set different dates based on the employee's phone_number
+-- You can adjust the conditions and dates as needed for your specific data
+UPDATE employee_details
+SET phone_no_added_date =
+    CASE
+        WHEN phone_number = '9999' THEN '2023-09-11'  -- Example date for phone_number '9999'
+        WHEN phone_number = '1111' THEN '2023-09-12'  -- Example date for phone_number '1111'
+        WHEN phone_number = '2222' THEN '2023-09-13'  -- Example date for phone_number '2222'
+        -- Add more conditions as needed
+        ELSE '2023-09-10'  -- Default date for other cases
+    END;
+
+INSERT INTO employee_details (employeeid, phone_number, isdefault, phone_no_added_date)
+VALUES (1000, '1234', false, '2023-09-10');
+
+
+WITH phone_no AS (
+    SELECT * FROM ( 
+        SELECT *,
+            ROW_NUMBER() OVER (PARTITION BY employeeid ORDER BY phone_no_added_date DESC) AS rn 
+        FROM employee_details
+        WHERE isdefault = FALSE
+    ) a 
+    WHERE rn = 1
+),
+default_phone AS (
+    SELECT employeeid, phone_number
+    FROM employee_details
+    WHERE isdefault = TRUE
+)
+SELECT 
+    a.employeeid,
+    COALESCE(c.phone_number, d.phone_number) AS phone,
+    COUNT(*) AS total_entries,
+    COUNT(CASE WHEN entry_details = 'login' THEN timestamp_details ELSE NULL END) AS total_logins,
+    COUNT(CASE WHEN entry_details = 'logout' THEN timestamp_details ELSE NULL END) AS total_logouts,
+    MAX(CASE WHEN entry_details = 'login' THEN timestamp_details ELSE NULL END) AS latest_login,
+    MAX(CASE WHEN entry_details = 'logout' THEN timestamp_details ELSE NULL END) AS latest_logout
+FROM employee_checkin_details a
+LEFT JOIN default_phone c ON a.employeeid = c.employeeid
+LEFT JOIN phone_no d ON a.employeeid = d.employeeid
+GROUP BY a.employeeid, COALESCE(c.phone_number, d.phone_number);
+
+;;
+
+-----------------------------------------------------------------------------------------------
+--Uplers SQL Interview Problem (Senior Data Analyst) | Includes 4 Test Cases
+/* Question : An organization is looking to hire employees /candidates for their junior and senior positions. They have a total quota/limit of 50000$ in all , they have to first fill up the
+senior positions and then fill up the junior positions, There are 3 test cases , write a SQL query to satisfy all the testcases. To check whether your SQL query is correct or wrong you
+can try with your own test case too */
+-----------------------------------------------------------------------------------------------
+
+-- Create the candidates table-- Create the candidates_2 table
+CREATE TABLE candidates_2 (
+    id INT PRIMARY KEY,
+    positions VARCHAR(10) NOT NULL,
+    salary INT NOT NULL
+);
+
+-- Test case 1
+INSERT INTO candidates_2 VALUES (1, 'junior', 5000);
+INSERT INTO candidates_2 VALUES (2, 'junior', 7000);
+INSERT INTO candidates_2 VALUES (3, 'junior', 7000);
+INSERT INTO candidates_2 VALUES (4, 'senior', 10000);
+INSERT INTO candidates_2 VALUES (5, 'senior', 30000);
+INSERT INTO candidates_2 VALUES (6, 'senior', 20000);
+-----------------------------------------------------------------
+SELECT * FROM candidates_2 ;
+
+WITH cte as (
+    SELECT  * , 
+        SUM(salary) OVER(PARTITION BY positions ORDER BY salary asc ,id) as running_salary
+    FROM candidates_2
+ ), 
+ senior_cte as ( 
+  SELECT count(*) seniors ,
+  SUM(salary) as s_salary
+   FROM cte  WHERE positions = 'senior' 
+   AND running_salary <=50000
+ ) ,
+ junior_cte as (
+    SELECT count(*) as juniors 
+    FROM cte 
+    WHERE positions = 'junior' 
+    AND running_salary <= 50000 -( SELECT s_salary from senior_cte)
+ )
+  SELECT seniors, juniors FROM senior_cte join junior_cte
+ ;;
+------------------------------------------------------------------
+delete FROM candidates_2 ; 
+
+-- Test case 2
+INSERT INTO candidates_2 VALUES (7, 'junior', 10000);
+INSERT INTO candidates_2 VALUES (8, 'senior', 15000);
+INSERT INTO candidates_2 VALUES (9, 'senior', 30000);
+--------------------------------------------------------------------------
+SELECT * FROM candidates_2 ;
+
+WITH cte as (
+    SELECT  * , 
+        SUM(salary) OVER(PARTITION BY positions ORDER BY salary asc ,id) as running_salary
+    FROM candidates_2
+ ), 
+ senior_cte as ( 
+  SELECT count(*) seniors ,
+  SUM(salary) as s_salary
+   FROM cte  WHERE positions = 'senior' 
+   AND running_salary <=50000
+ ) ,
+ junior_cte as (
+    SELECT count(*) as juniors 
+    FROM cte 
+    WHERE positions = 'junior' 
+    AND running_salary <= 50000 -( SELECT s_salary from senior_cte)
+ )
+  SELECT seniors, juniors FROM senior_cte join junior_cte
+ ;;
+
+--------------------------------------------------------------------------
+-- Test case 3
+DELETE FROM candidates_2 ; 
+
+INSERT INTO candidates_2 VALUES (10, 'junior', 15000);
+INSERT INTO candidates_2 VALUES (11, 'junior', 15000);
+INSERT INTO candidates_2 VALUES (12, 'junior', 20000);
+INSERT INTO candidates_2 VALUES (13, 'senior', 60000);
+-------------------------------------------------------------------
+select * FROM candidates_2 ; 
+
+WITH cte as (
+    SELECT  * , 
+        SUM(salary) OVER(PARTITION BY positions ORDER BY salary asc ,id) as running_salary
+    FROM candidates_2
+ ), 
+ senior_cte as ( 
+  SELECT count(*) seniors ,
+  COALESCE(SUM(salary),0) as s_salary
+   FROM cte  WHERE positions = 'senior' 
+   AND running_salary <=50000
+ ) ,
+ junior_cte as (
+    SELECT count(*) as juniors 
+    FROM cte 
+    WHERE positions = 'junior' 
+    AND running_salary <= 50000 -( SELECT s_salary from senior_cte)
+ )
+  SELECT seniors, juniors FROM senior_cte join junior_cte
+ ;;
+--------------------------------------------------------------------------
+-- Test case 4
+DELETE FROM candidates_2 ;
+
+
+INSERT INTO candidates_2 VALUES (14, 'junior', 10000);
+INSERT INTO candidates_2 VALUES (15, 'junior', 10000);
+INSERT INTO candidates_2 VALUES (16, 'senior', 15000);
+INSERT INTO candidates_2 VALUES (17, 'senior', 30000);
+INSERT INTO candidates_2 VALUES (18, 'senior', 15000);
+
+SELECT * FROM candidates_2 ; 
+
+
+WITH cte as (
+    SELECT  * , 
+        SUM(salary) OVER(PARTITION BY positions ORDER BY salary asc ,id) as running_salary
+    FROM candidates_2
+ ), 
+ senior_cte as ( 
+  SELECT count(*) seniors ,
+  COALESCE(SUM(salary),0) as s_salary
+   FROM cte  WHERE positions = 'senior' 
+   AND running_salary <=50000
+ ) ,
+ junior_cte as (
+    SELECT count(*) as juniors 
+    FROM cte 
+    WHERE positions = 'junior' 
+    AND running_salary <= 50000 -( SELECT s_salary from senior_cte)
+ )
+  SELECT seniors, juniors FROM senior_cte join junior_cte
+ ;;
+
+
+ -------------------------------------------------------------------------------------------------------------
