@@ -1,4 +1,5 @@
-# mysql-practice-VSCODE
+# SQL-Interview-Exercises
+
  Practicing MYSQL in VSCODE easiest and productive approach
 
 In this we will be doing following tasks -> 
