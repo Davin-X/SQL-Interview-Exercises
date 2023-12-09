@@ -1,5 +1,7 @@
 -- the employee data is stored in a table called employees with columns emp_id, name, department, and salary, 
---the following query can be used to get the second highest salary for each department:if there is <2 employee get 1st one 
+--the following query can be used to get the second highest salary for each department:
+-- if there is <2 employee get 1st one 
+
 CREATE TABLE employee_dept (
   id INT,
   name VARCHAR(50),

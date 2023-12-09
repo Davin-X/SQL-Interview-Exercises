@@ -1,3 +1,4 @@
+-- Active: 1671859768936@@127.0.0.1@3306@practice
 CREATE TABLE teams (
   team_id INT PRIMARY KEY,
   team_name VARCHAR(255) NOT NULL

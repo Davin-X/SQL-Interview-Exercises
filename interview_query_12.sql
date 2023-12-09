@@ -1,4 +1,4 @@
-''''
+"""
 table 
 name	id
 A		1			
@@ -12,7 +12,7 @@ output
 
 name	id
 B		2
-''''
+"""
 ;
 
 CREATE TABLE my_table (
